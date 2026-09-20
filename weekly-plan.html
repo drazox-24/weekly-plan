@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Haftalık Plan</title>
+  <style>
+    :root{
+      --text:#2C2C2B; --muted:#7D7A75; --bg:#FFFFFF; --surface:#F9F8F7; --surface2:#F0EFED;
+      --border:#E6E5E3; --purple:#5B35F5; --purpleSoft:#EFEAFE; --green:#46A171; --greenSoft:#E8F1EC;
+      --shadow: 0 1px 2px rgba(0,0,0,.05), 0 4px 12px rgba(0,0,0,.04);
+      --radius:12px;
+      --colGap:14px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      color:var(--text);
+      background:var(--bg);
+    }
+    .app{max-width:1540px; margin:0 auto; padding:10px 14px 32px;}
+
+    .topbar{display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:6px;}
+    .brand h1{font-size:18px; line-height:1.25; margin:0; letter-spacing:.2px;}
+    .brand p{margin:6px 0 0; color:var(--muted); font-size:13px;}
+
+    .controls{display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:flex-end;}
+    .btn{
+      appearance:none; border:1px solid var(--border); background:var(--surface);
+      color:var(--text);
+      padding:10px 12px; border-radius:999px; font-weight:700; font-size:12px;
+      cursor:pointer;
+    }
+    .btn.primary{background:var(--purpleSoft); border-color:#ddd1ff; color:#3717c8;}
+    .btn:hover{filter:brightness(.98)}
+    .btn:active{transform:translateY(1px)}
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(7, minmax(168px, 1fr));
+      gap:var(--colGap);
+      align-items:start;
+    }
+
+    .day{background:transparent; border-radius:14px; min-height:700px;}
+
+    .dayHeader{
+      text-align:center;
+      padding:12px 8px 10px;
+      border-bottom:1px solid var(--border);
+      margin-bottom:10px;
+    }
+    .dow{font-size:16px; color:var(--text); font-weight:800; letter-spacing:.2px;}
+    .totals{font-size:12px; color:var(--muted); margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+
+    .addTask{
+      width:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      margin:0 0 10px;
+      padding:11px 12px;
+      border-radius:10px;
+      border:0;
+      background:#fff;
+      cursor:pointer;
+      color:#2c11c8;
+      font-weight:800;
+      font-size:15px;
+    }
+    .addTask:hover{background:var(--purpleSoft)}
+
+    .cards{display:flex; flex-direction:column; gap:11px; padding:0 4px 10px;}
+
+    .card{
+      background:#F1F1F1;
+      border:1px solid #eeeeee;
+      border-radius:8px;
+      padding:16px 12px;
+      box-shadow:none;
+      cursor:pointer;
+      position:relative;
+      min-height:94px;
+    }
+    .card:hover{box-shadow:var(--shadow); background:#fff}
+
+    .cardTitle{text-align:center; font-weight:800; font-size:13px; line-height:1.25; margin:16px 20px 8px;}
+    .cardMeta{text-align:center; font-size:13px; color:#6D6A66; font-weight:650; line-height:1.25;}
+    .cardMinutes{margin-top:4px; font-size:11px; color:#8B8782; text-align:center;}
+
+    .kebab{
+      position:absolute; right:7px; top:5px;
+      width:28px; height:28px;
+      border-radius:8px;
+      display:flex; align-items:center; justify-content:center;
+      border:1px solid transparent;
+      background:transparent;
+      cursor:pointer;
+      color:#111;
+      font-size:18px;
+      line-height:1;
+    }
+    .kebab:hover{border-color:var(--border); background:#fff}
+
+    .check{
+      position:absolute; left:10px; top:9px;
+      width:28px; height:28px;
+      border-radius:7px;
+      border:1px solid var(--border);
+      background:#fff;
+      display:flex; align-items:center; justify-content:center;
+      color:#fff;
+      cursor:pointer;
+      padding:0;
+    }
+    .check:hover{border-color:var(--green); background:var(--greenSoft)}
+    .check:focus-visible{outline:3px solid rgba(70,161,113,.28); outline-offset:2px}
+    .card.completed{background:var(--greenSoft); border-color:#cfe3d7;}
+    .card.completed .cardTitle{text-decoration:line-through; text-decoration-thickness:1.5px; color:#35644b;}
+    .card.completed .check{background:var(--green); border-color:var(--green);}
+    .card.completed .check svg{display:block}
+    .check svg{display:none}
+
+    /* Modal */
+    .overlay{position:fixed; inset:0; background:rgba(25,25,25,.35); display:none; align-items:center; justify-content:center; padding:18px; z-index:50;}
+    .overlay.show{display:flex}
+    .modal{
+      width:min(430px, 100%);
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:12px;
+      box-shadow:0 12px 40px rgba(0,0,0,.18);
+      overflow:hidden;
+    }
+    .modalHeader{
+      display:flex; align-items:center; justify-content:center; gap:10px;
+      padding:18px 54px 16px;
+      border-bottom:1px solid var(--border);
+      position:relative;
+    }
+    .modalHeader h2{margin:0; font-size:18px; font-weight:800; letter-spacing:.1px; text-align:center;}
+    .iconBtn{
+      position:absolute; right:12px; top:11px;
+      width:38px; height:38px;
+      border-radius:12px;
+      border:0;
+      background:#fff;
+      font-size:22px;
+      cursor:pointer;
+    }
+    .modalBody{padding:10px 16px 16px;}
+    .detailRows{border-top:0;}
+    .detailRow{
+      display:grid; grid-template-columns: 1fr 1fr; align-items:center; gap:12px;
+      padding:8px 0; border-bottom:1px solid var(--border);
+      min-height:34px;
+    }
+    .detailRow label{font-size:14px; color:var(--muted);}
+    .detailRow input, .detailRow select{
+      width:100%; border:0; background:transparent; text-align:right; font-size:15px; color:var(--text); outline:none;
+      padding:2px 0;
+    }
+    .detailRow input[type="number"]{appearance:textfield;}
+    .detailRow input::-webkit-outer-spin-button,.detailRow input::-webkit-inner-spin-button{appearance:none; margin:0;}
+    .noteWrap{padding-top:8px;}
+    .noteWrap label{display:block; font-size:14px; color:var(--muted); margin-bottom:4px;}
+    textarea{
+      width:100%; min-height:58px; resize:vertical; border:0; outline:none;
+      font-family:inherit; font-size:15px; color:var(--text); background:transparent;
+    }
+    .row{display:flex; gap:10px; align-items:center; justify-content:space-between; margin-top:12px; flex-wrap:wrap;}
+    .toggle{
+      display:flex; align-items:center; gap:10px;
+      background:var(--surface);
+      border:1px solid var(--border);
+      padding:9px 11px;
+      border-radius:12px;
+      cursor:pointer;
+      user-select:none;
+      font-size:13px;
+      font-weight:700;
+    }
+    .toggle .box{width:18px; height:18px; border-radius:6px; border:1px solid var(--border); background:#fff; display:flex; align-items:center; justify-content:center;}
+    .toggle.checked{background:var(--greenSoft); border-color:#cfe3d7; color:#245b3d;}
+    .toggle.checked .box{background:var(--green); border-color:var(--green);}
+    .toggle.checked svg{display:block}
+    .toggle svg{display:none}
+
+    .modalFooter{padding:0 16px 12px; display:flex; flex-direction:column; gap:9px;}
+    .doneBtn{
+      width:100%; border:0; border-radius:12px; background:linear-gradient(90deg,#6B3DFF,#4422EA); color:#fff;
+      height:46px; font-size:14px; font-weight:800; cursor:pointer;
+    }
+    .footerSmall{display:flex; justify-content:space-between; gap:10px;}
+    .danger{background:#fff; border-color:#f0c6c2; color:#b42318;}
+
+    /* Responsive */
+    @media (max-width: 1260px){.grid{grid-template-columns: repeat(4, minmax(168px, 1fr));}.day{min-height:unset}}
+    @media (max-width: 820px){.grid{grid-template-columns: repeat(2, minmax(168px, 1fr));}.topbar{flex-direction:column}.controls{justify-content:flex-start}}
+    @media (max-width: 520px){.grid{grid-template-columns: 1fr;}.app{padding:12px}.modal{width:100%}}
+
+    @media (prefers-color-scheme: dark){
+      body{background:#191919; color:#fff;}
+      :root{--border: rgba(255,255,255,.20); --surface:#202020; --surface2:#383836; --muted: rgba(255,255,255,.65); --text:#fff;}
+      .card{background:#2a2a2a; border-color:#383836;}
+      .card:hover{background:#202020}
+      .modal,.modalHeader,.iconBtn{background:#202020}
+      .detailRow input,.detailRow select,textarea{color:#fff;background:transparent;}
+      .check{background:#191919}
+      .addTask{background:#191919;color:#b7a8ff}
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand">
+        <h1>Haftalık Plan</h1>
+        <p>Görev kutularına tıkla → detayları aç. Tamamladığında işaretle. Gün toplamı otomatik hesaplanır.</p>
+      </div>
+      <div class="controls">
+        <button class="btn primary" id="btnAddQuick">+ Görev Ekle</button>
+      </div>
+    </div>
+
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <div class="overlay" id="overlay" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modalHeader">
+        <h2 id="modalTitle">Görev</h2>
+        <button class="iconBtn" id="btnClose" aria-label="Kapat">×</button>
+      </div>
+      <div class="modalBody">
+        <div class="detailRows">
+          <div class="detailRow"><label>Başlık</label><input id="fTitle" type="text" placeholder="TYT - Türkçe - Deneme" /></div>
+          <div class="detailRow"><label>Durum</label><select id="fStatus"><option value="Tamamlanmadı">Tamamlanmadı</option><option value="Tamamlandı">Tamamlandı</option></select></div>
+          <div class="detailRow"><label>Sınav</label><select id="fExam"><option value="TYT">TYT</option><option value="AYT">AYT</option><option value="YDT">YDT</option><option value="Diğer">Diğer</option></select></div>
+          <div class="detailRow"><label>Ders</label><input id="fLesson" type="text" placeholder="Türkçe" /></div>
+          <div class="detailRow"><label>Konu</label><input id="fTopic" type="text" placeholder="Genel" /></div>
+          <div class="detailRow"><label>Tür</label><input id="fType" type="text" placeholder="Deneme" /></div>
+          <div class="detailRow"><label>Kaynak</label><input id="fSource" type="text" placeholder="345" /></div>
+          <div class="detailRow"><label>Tahmini Bitirme Süresi</label><input id="fMinutes" type="number" min="0" step="5" placeholder="50" /></div>
+          <div class="detailRow"><label>Gün</label><select id="fDay"></select></div>
+        </div>
+        <div class="noteWrap">
+          <label>Not</label>
+          <textarea id="fNote" placeholder="Kısa not…"></textarea>
+        </div>
+        <div class="row">
+          <div class="toggle" id="toggleDone" role="checkbox" aria-checked="false" tabindex="0">
+            <span class="box" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 3L5 9L2 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <span>Tamamlandı olarak işaretle</span>
+          </div>
+          <span style="font-size:12px; color:var(--muted)" id="metaId"></span>
+        </div>
+      </div>
+      <div class="modalFooter">
+        <button class="doneBtn" id="btnSave">Tamam</button>
+        <div class="footerSmall">
+          <button class="btn danger" id="btnDelete">Sil</button>
+          <button class="btn" id="btnCancel">Vazgeç</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const DOW_TR = ["Pazartesi","Salı","Çarşamba","Perşembe","Cuma","Cumartesi","Pazar"];
+  const $ = (id) => document.getElementById(id);
+  const grid = $("grid"), overlay = $("overlay");
+  const btnClose = $("btnClose"), btnCancel = $("btnCancel"), btnSave = $("btnSave"), btnDelete = $("btnDelete"), btnAddQuick = $("btnAddQuick");
+  const fTitle = $("fTitle"), fStatus = $("fStatus"), fExam = $("fExam"), fLesson = $("fLesson"), fTopic = $("fTopic"), fType = $("fType"), fSource = $("fSource"), fMinutes = $("fMinutes"), fDay = $("fDay"), fNote = $("fNote"), toggleDone = $("toggleDone"), metaId = $("metaId");
+  const STORAGE_KEY = "weeklyPlanner_v3";
+  function minutesToHm(min){ const m = Math.max(0, Number(min)||0); const h = Math.floor(m/60); const r = m%60; return h>0 ? `${h} saat ${r} dk` : `${r} dk`; }
+  function uid(){ return "t_" + Math.random().toString(16).slice(2) + "_" + Date.now().toString(16); }
+  function loadState(){ try{ return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}") || {}; } catch{ return {}; } }
+  function saveState(state){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+  function getPlan(state){ if(!Array.isArray(state.tasks)) state.tasks = []; return state; }
+  function computeDayTotals(tasks){ const totals = Array(7).fill(0); tasks.forEach(t => { const di = Number(t.dayIndex); if(di>=0 && di<7){ totals[di] += (Number(t.minutes)||0); } }); return totals; }
+
+  function render(){
+    const state = loadState();
+    const plan = getPlan(state);
+    fDay.innerHTML = "";
+    for(let i=0;i<7;i++){ const opt = document.createElement('option'); opt.value = String(i); opt.textContent = DOW_TR[i]; fDay.appendChild(opt); }
+    const totals = computeDayTotals(plan.tasks);
+    grid.innerHTML = "";
+    for(let i=0;i<7;i++){
+      const col = document.createElement('div'); col.className = 'day'; col.dataset.dayIndex = String(i);
+      const header = document.createElement('div'); header.className = 'dayHeader';
+      header.innerHTML = `<div class="dow">${DOW_TR[i]}</div><div class="totals">Toplam süre: ${minutesToHm(totals[i])}</div>`;
+      col.appendChild(header);
+      const addBtn = document.createElement('button'); addBtn.className = 'addTask'; addBtn.type = 'button'; addBtn.innerHTML = '<span style="font-size:16px; line-height:0;">+</span> Görev Ekle'; addBtn.addEventListener('click', () => openModal({ dayIndex: i })); col.appendChild(addBtn);
+      const cards = document.createElement('div'); cards.className = 'cards';
+      const dayTasks = plan.tasks.filter(t => Number(t.dayIndex)===i);
+      dayTasks.forEach(t => {
+        const card = document.createElement('div'); card.className = 'card' + (t.completed ? ' completed' : ''); card.tabIndex = 0; card.setAttribute('role','button'); card.setAttribute('aria-label', t.title || 'Görev');
+        card.addEventListener('click', () => openModal(t)); card.addEventListener('keydown', (e) => { if(e.key==='Enter' || e.key===' '){ e.preventDefault(); openModal(t); } });
+        const check = document.createElement('button'); check.className = 'check'; check.type = 'button'; check.title = t.completed ? 'Tamamlanmadı olarak işaretle' : 'Tamamlandı olarak işaretle'; check.setAttribute('aria-label', check.title); check.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 3L5 9L2 6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        check.addEventListener('click', (e) => { e.stopPropagation(); toggleTaskComplete(t.id); });
+        const title = document.createElement('div'); title.className = 'cardTitle'; title.textContent = t.title || '(Başlıksız)';
+        const meta = document.createElement('div'); meta.className = 'cardMeta'; meta.textContent = t.topic || 'Genel';
+        const minutes = document.createElement('div'); minutes.className = 'cardMinutes'; minutes.textContent = `${Number(t.minutes)||0} dk`;
+        const kebab = document.createElement('button'); kebab.className = 'kebab'; kebab.type = 'button'; kebab.title = 'Düzenle'; kebab.textContent = '⋯'; kebab.addEventListener('click', (e) => { e.stopPropagation(); openModal(t); });
+        card.append(check,title,meta,minutes,kebab); cards.appendChild(card);
+      });
+      col.appendChild(cards); grid.appendChild(col);
+    }
+    saveState(state);
+  }
+
+  let modalDraft = null;
+  function openModal(taskOrDefaults = {}){
+    const state = loadState(), plan = getPlan(state);
+    const existing = taskOrDefaults.id ? plan.tasks.find(t => t.id === taskOrDefaults.id) : null;
+    const t = existing ? structuredClone(existing) : { id: uid(), title:"", status:"Tamamlanmadı", exam:"TYT", lesson:"", topic:"", type:"", source:"", minutes:0, note:"", dayIndex:Number(taskOrDefaults.dayIndex ?? 0), completed:false, createdAt:Date.now() };
+    modalDraft = t; $("modalTitle").textContent = existing ? (t.title || "Görev") : "Yeni Görev";
+    fTitle.value=t.title||""; fStatus.value=t.completed?"Tamamlandı":(t.status||"Tamamlanmadı"); fExam.value=t.exam||"TYT"; fLesson.value=t.lesson||""; fTopic.value=t.topic||""; fType.value=t.type||""; fSource.value=t.source||""; fMinutes.value=String(Number(t.minutes)||0); fDay.value=String(Number(t.dayIndex)||0); fNote.value=t.note||"";
+    setDoneUI(!!t.completed); metaId.textContent = existing ? `${Number(t.minutes)||0} dk` : ""; btnDelete.style.display = existing ? "inline-flex" : "none"; showModal();
+  }
+  function setDoneUI(isDone){ toggleDone.classList.toggle('checked', isDone); toggleDone.setAttribute('aria-checked', isDone ? 'true' : 'false'); fStatus.value = isDone ? 'Tamamlandı' : 'Tamamlanmadı'; }
+  function showModal(){ overlay.classList.add('show'); overlay.setAttribute('aria-hidden','false'); fTitle.focus(); }
+  function closeModal(){ overlay.classList.remove('show'); overlay.setAttribute('aria-hidden','true'); modalDraft = null; }
+  function upsertTask(task){ const state=loadState(), plan=getPlan(state); const idx=plan.tasks.findIndex(t=>t.id===task.id); if(idx>=0) plan.tasks[idx]=task; else plan.tasks.unshift(task); saveState(state); }
+  function deleteTask(taskId){ const state=loadState(), plan=getPlan(state); plan.tasks=plan.tasks.filter(t=>t.id!==taskId); saveState(state); }
+  function toggleTaskComplete(taskId){ const state=loadState(), plan=getPlan(state); const task=plan.tasks.find(t=>t.id===taskId); if(!task) return; task.completed=!task.completed; task.status=task.completed?'Tamamlandı':'Tamamlanmadı'; saveState(state); render(); }
+  function bindModalEvents(){
+    function syncDraft(){ if(!modalDraft) return; modalDraft.title=fTitle.value.trim(); modalDraft.exam=fExam.value; modalDraft.lesson=fLesson.value.trim(); modalDraft.topic=fTopic.value.trim(); modalDraft.type=fType.value.trim(); modalDraft.source=fSource.value.trim(); modalDraft.minutes=Math.max(0,Number(fMinutes.value||0)); modalDraft.note=fNote.value; modalDraft.dayIndex=Number(fDay.value||0); const done=(fStatus.value==='Tamamlandı'); modalDraft.completed=done; modalDraft.status=done?'Tamamlandı':'Tamamlanmadı'; setDoneUI(done); }
+    [fTitle,fStatus,fExam,fLesson,fTopic,fType,fSource,fMinutes,fDay,fNote].forEach(el => { el.addEventListener('input', syncDraft); el.addEventListener('change', syncDraft); });
+    toggleDone.addEventListener('click', () => { const isDone=toggleDone.getAttribute('aria-checked')==='true'; setDoneUI(!isDone); if(modalDraft){ modalDraft.completed=!isDone; modalDraft.status=(!isDone)?'Tamamlandı':'Tamamlanmadı'; } });
+    toggleDone.addEventListener('keydown', (e) => { if(e.key==='Enter'||e.key===' '){ e.preventDefault(); toggleDone.click(); } });
+    btnSave.addEventListener('click', () => { if(!modalDraft) return; if(!modalDraft.title) modalDraft.title='(Başlıksız)'; upsertTask(modalDraft); closeModal(); render(); });
+    btnCancel.addEventListener('click', () => { closeModal(); render(); }); btnClose.addEventListener('click', () => { closeModal(); render(); });
+    btnDelete.addEventListener('click', () => { if(!modalDraft) return; if(confirm('Bu görevi silmek istiyor musun?')){ deleteTask(modalDraft.id); closeModal(); render(); } });
+    overlay.addEventListener('click', (e) => { if(e.target === overlay){ closeModal(); render(); } });
+    document.addEventListener('keydown', (e) => { if(e.key==='Escape' && overlay.classList.contains('show')){ closeModal(); render(); } });
+  }
+  function init(){ render(); btnAddQuick.addEventListener('click', () => openModal({ dayIndex: 0 })); bindModalEvents(); }
+  init();
+})();
+</script>
+</body>
+</html>
